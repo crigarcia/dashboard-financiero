@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Ingresos y Egresos</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+    }
+
+    header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .config-section {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .config-section h3 {
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .config-section input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+     
+
+    .config-section button {
+      width: 100%;
+      padding: 12px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+
+    .config-section button:hover {
+      background: #764ba2;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .card h3 {
+      color: #666;
+      font-size: 14px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+
+    .card .amount {
+      font-size: 2.5em;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .ingreso .amount { color: #10b981; }
+    .egreso .amount { color: #ef4444; }
+    .balance .amount { color: #667eea; }
+
+    .charts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .chart-container {
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      position: relative;
+      height: 400px;
+    }
+
+    .chart-container h3 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .table-container {
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      overflow-x: auto;
+    }
+
+    .table-container h3 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table thead {
+      background: #f3f4f6;
+    }
+
+    table th {
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #333;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    table td {
+      padding: 12px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    table tr:hover {
+      background: #f9fafb;
+    }
+
+    .ingreso-badge {
+      background: #d1fae5;
+      color: #065f46;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .egreso-badge {
+      background: #fee2e2;
+      color: #7f1d1d;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .loading {
+      text-align: center;
+      color: white;
+      font-size: 18px;
+    }
+
+    .error {
+      background: #fee2e2;
+      color: #7f1d1d;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+
+    .success {
+      background: #d1fae5;
+      color: #065f46;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+
+    .info-box {
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+
+    @media (max-width: 768px) {
+      header h1 { font-size: 1.8em; }
+      .charts { grid-template-columns: 1fr; }
+      .dashboard { grid-template-columns: 1fr; }
+    }
+    /* 📱 Modo app mobile */
+@media (max-width: 600px) {
+  body {
+    padding: 10px;
+  }
+
+  .container {
+    max-width: 100%;
+  }
+
+  .card .amount {
+    font-size: 1.8em;
+  }
+
+  .chart-container {
+    height: 300px;
+  }
+
+  table th, table td {
+    font-size: 12px;
+    padding: 8px;
+  }
+
+  button {
+    font-size: 14px;
+    padding: 10px;
+  }
+}
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+  100% { transform: translateX(0); }
+}
+
+.perdida {
+  animation: shake 0.4s;
+}
+
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <header>
+      <h1>📊 Dashboard Financiero</h1>
+      <p>Ingresos y Egresos</p>
+    </header>
+
+    <div class="config-section">
+      <h3>Configurar Google Sheets</h3>
+
+      <div class="info-box">
+        💡 Pega la URL de tu Google Sheet publicado en CSV
+      </div>
+
+      <input type="text" id="sheetsUrl" placeholder="https://docs.google.com/spreadsheets/d/..." value="">
+      <button onclick="cargarDatos()">Cargar Datos</button>
+      <button onclick="exportarExcel()">📊 Exportar a Excel</button>
+      <button onclick="exportarPDF()">📄 Exportar a PDF</button>
+      <button onclick="toggleAutoUpdate()">⏱️ Auto actualizar: OFF</button>
+      <select id="filtroMes" onchange="filtrarTodo()">
+        <option value="todos">Todos los meses</option>
+      </select>
+
+      <select id="filtroCentro" onchange="filtrarTodo()">
+        <option value="todos">Todos los centros</option>
+      </select>
+
+      <div id="mensaje" style="margin-top: 10px;"></div>
+    </div>
+
+    <div id="contenido" style="display: none;">
+
+      <div class="dashboard">
+        <div class="card ingreso">
+          <h3>Total Ingresos</h3>
+          <div class="amount" id="totalIngresos">$0.00</div>
+        </div>
+
+        <div class="card egreso">
+          <h3>Total Egresos</h3>
+          <div class="amount" id="totalEgresos">$0.00</div>
+        </div>
+
+        <div class="card balance">
+          <h3>Balance</h3>
+          <div class="amount" id="balance">$0.00</div>
+        </div>
+      </div>
+
+      <div class="charts">
+        <div class="chart-container">
+          <h3>Distribución Ingresos vs Egresos</h3>
+          <canvas id="pieChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+          <h3>Tendencia Mensual</h3>
+          <canvas id="lineChart"></canvas>
+        </div>
+      </div>
+
+        <div class="chart-container">
+          <h3>Centros</h3>
+          <div id="cardsCentros" class="dashboard"></div>
+       </div>
+
+      <div class="chart-container">
+  <h3>Ingresos por Categoría</h3>
+  <canvas id="barCategorias"></canvas>
+</div>
+
+      <div class="table-container">
+        <h3>Detalle de Transacciones</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Descripción</th>
+              <th>Tipo</th>
+              <th>Monto</th>
+            </tr>
+          </thead>
+          
+
+          <tbody id="tablaTransacciones"></tbody>
+        </table>
+      </div>
+      <div id="ranking"></div>
+
+    </div>
+    <div id="vistaCentro" style="display:none;">
+
+  <button onclick="volverDashboard()">⬅ Volver</button>
+
+  <h2 id="tituloCentro"></h2>
+
+  <div class="dashboard">
+    
+    <div class="card">
+      <h3>Facturación</h3>
+      <div class="amount" id="facturacionCentro">$0</div>
+    </div>
+
+    <div class="card">
+      <h3>RRHH</h3>
+      <div class="amount" id='rrhh'>$0</div>
+    </div>
+
+    <div class="card">
+      <h3>Prestacional</h3>
+      <div class="amount" id='prestacional'>$0</div>
+    </div>
+
+    <div class="card">
+      <h3>Comercial</h3>
+      <div class="amount" id='comercial'>$0</div>
+    </div>
+
+    <div class="card">
+      <h3>Servicios</h3>
+      <div class="amount" id='servicios'>$0</div>
+    </div>
+
+    <div class="card">
+      <h3>GastosnoMedicos</h3>
+      <div class="amount" id='GastosnoMedicos'>$0</div>
+    </div>
+
+    <div class="card">
+      <h3>InsumosMedicos</h3>
+      <div class="amount" id='InsumosMedicos'>$0</div>
+    </div>
+     <div class="card">
+      <h3>HonorariosMedicos</h3>
+      <div class="amount" id='HonorariosMedicos'>$0</div>
+    </div>
+
+    <div class="card">
+      <h3>Impuestos</h3>
+      <div class="amount" id='impuestos'>$0</div>
+    </div>
+  </div>
+
+</div>
+
+  </div>
+
+  <script>
+let chartPie = null;
+let chartLine = null;
+let autoUpdate = false;
+let intervalo = null;
+let chartCategorias = null;
+
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSM-gzlhL_TT_8JbZbautFkIy-WPUGv9nLECHidRlte4bcgy-uX0U_J5exQ16KrMY4Z3W7UcgP_eT6X/pub?gid=1882593221&single=true&output=csv';
+
+function normalizarTexto(texto) {
+    return (texto || "")
+        .toString()
+        .toLowerCase()
+        .normalize("NFD")                 // separa tildes
+        .replace(/[\u0300-\u036f]/g, "")  // elimina tildes
+        .replace(/\s+/g, " ")             // espacios dobles → uno
+        .trim();
+}
+
+
+
+async function cargarDatos() {
+    const url = document.getElementById('sheetsUrl').value.trim();
+    const mensaje = document.getElementById('mensaje');
+
+    if (!url) {
+        mensaje.innerHTML = '<div class="error">⚠️ Por favor ingresa la URL de Google Sheets</div>';
+        return;
+    }
+
+    mensaje.innerHTML = '<div class="loading">⏳ Cargando datos...</div>';
+
+    try {
+        const response = await fetch(CSV_URL + '&nocache=' + new Date().getTime());
+
+        if (!response.ok) {
+            throw new Error('No se pudo cargar la hoja');
+        }
+
+        const csv = await response.text();
+        const datos = parsearCSV(csv);
+
+        if (datos.length === 0) {
+            throw new Error('La hoja no contiene datos válidos');
+        }
+
+        // Limpiar pantalla
+        document.getElementById('totalIngresos').textContent = '$0.00';
+        document.getElementById('totalEgresos').textContent = '$0.00';
+        document.getElementById('balance').textContent = '$0.00';
+        document.getElementById('tablaTransacciones').innerHTML = '';
+
+        window.datosGlobales = datos;
+
+        llenarSelectorMeses(datos);
+        llenarSelectorCentros(datos);
+        procesarDatos(datos);
+
+        mensaje.innerHTML = '<div class="success">✅ Datos cargados correctamente</div>';
+        document.getElementById('contenido').style.display = 'block';
+
+        localStorage.setItem('sheetsUrl', url);
+
+    } catch (error) {
+        mensaje.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+        console.error(error);
+    }
+    
+}
+
+function parsearCSV(csv) {
+    const lineas = csv.trim().split('\n');
+    if (lineas.length < 2) return [];
+
+    const separador = lineas[0].includes(';') ? ';' :
+                      lineas[0].includes('\t') ? '\t' : ',';
+
+    const datos = [];
+
+    for (let i = 1; i < lineas.length; i++) {
+        const valores = lineas[i].split(separador).map(v => v.trim());
+
+        if (valores.length < 4) continue;
+
+        datos.push({
+            fecha: valores[0],
+            descripcion: valores[1],
+            tipo: (valores[2] || '').toLowerCase().trim(),
+            monto: convertirMonto(valores[3]),
+            centro: obtenerCentro(valores[1]) // 🔥 NUEVO
+        });
+    }
+
+    return datos;
+}
+
+function convertirMonto(valor) {
+    if (!valor) return 0;
+
+    return parseFloat(
+        valor
+            .replace(/"/g, '')
+            .replace(/\$/g, '')
+            .replace(/\s/g, '')
+            .replace(/\./g, '')
+            .replace(',', '.')
+    ) || 0;
+}
+function formatearMoneda(valor) {
+    return valor.toLocaleString('es-AR', {
+        style: 'currency',
+        currency: 'ARS',
+        minimumFractionDigits: 2
+    });
+}
+function obtenerCentro(descripcion) {
+    const d = descripcion.toLowerCase();
+
+    if (d.includes("ariston")) return "ARISTON";
+    if (d.includes("ambulancias")) return "AMBULANCIAS";
+    if (d.includes("periferico cerro")) return "PERIFERICO CERRO";
+    if (d.includes("hi dent")) return "HI DENT";
+    if (d.includes("güemes") || d.includes("guemes")) return "GÜEMES";
+
+    return "OTROS";
+}
+function procesarDatos(datos) {
+
+    // 🔹 DOM (SIEMPRE ARRIBA)
+    const mensaje = document.getElementById('mensaje');
+    mensaje.innerHTML = ''; // limpiar mensajes
+
+    const cardBalance = document.querySelector('.card.balance');
+
+    // 🔹 VARIABLES
+    let totalIngresos = 0;
+    let totalEgresos = 0;
+    const transaccionesPorMes = {};
+
+    // 🔹 RECORRER DATOS
+    datos.forEach(item => {
+
+        if (item.tipo === 'ingreso') {
+            totalIngresos += item.monto;
+        } else if (item.tipo === 'egreso') {
+            totalEgresos += item.monto;
+        }
+
+        const mes = item.fecha.substring(0, 7);
+
+        if (!transaccionesPorMes[mes]) {
+            transaccionesPorMes[mes] = { ingresos: 0, egresos: 0 };
+        }
+
+        if (item.tipo === 'ingreso') {
+            transaccionesPorMes[mes].ingresos += item.monto;
+        } else {
+            transaccionesPorMes[mes].egresos += item.monto;
+        }
+    });
+
+    // 🔹 KPIs
+    let cantidadIngresos = 0;
+    let cantidadEgresos = 0;
+
+    datos.forEach(item => {
+        if (item.tipo === 'ingreso') cantidadIngresos++;
+        if (item.tipo === 'egreso') cantidadEgresos++;
+    });
+
+    const promedioIngreso = totalIngresos / (cantidadIngresos || 1);
+    const promedioEgreso = totalEgresos / (cantidadEgresos || 1);
+
+    console.log("📊 KPIs:");
+    console.log("Promedio ingreso:", promedioIngreso);
+    console.log("Promedio egreso:", promedioEgreso);
+
+    // 🔹 CATEGORÍAS
+    const categorias = {};
+
+    datos.forEach(item => {
+        const categoria = item.descripcion || "Sin categoría";
+
+        if (!categorias[categoria]) {
+            categorias[categoria] = 0;
+        }
+
+        categorias[categoria] += item.monto;
+    });
+    // 🏆 RANKING AUTOMÁTICO
+    const ranking = Object.entries(categorias)
+        .sort((a, b) => b[1] - a[1]);
+
+    console.log("🏆 Top categorías:", ranking.slice(0, 3));
+    console.log("💸 Peores categorías:", ranking.slice(-3));
+
+    console.log("📂 Categorías:", categorias);
+    const labelsCat = Object.keys(categorias);
+    const dataCat = Object.values(categorias);
+
+    actualizarGraficoCategorias(labelsCat, dataCat);
+
+    // 🔹 BALANCE
+    const balance = totalIngresos - totalEgresos;
+
+    // 🔴🟢 SEMÁFORO VISUAL + ANIMACIÓN
+    if (balance < 0) {
+        cardBalance.style.background = '#fee2e2';
+        cardBalance.style.color = '#7f1d1d';
+        cardBalance.classList.add('perdida');
+
+        mensaje.innerHTML = '<div class="error">📉 Estás en pérdida en el período seleccionado</div>';
+    } else {
+        cardBalance.style.background = '#d1fae5';
+        cardBalance.style.color = '#065f46';
+        cardBalance.classList.remove('perdida');
+
+        mensaje.innerHTML = '<div class="success">📈 Resultado positivo</div>';
+    }
+
+    // 🚨 ALERTAS POR MES
+    const mesesEnPerdida = [];
+
+    Object.keys(transaccionesPorMes).forEach(mes => {
+        const data = transaccionesPorMes[mes];
+
+        if (data.ingresos < data.egresos) {
+            mesesEnPerdida.push(mes);
+        }
+    });
+
+    if (mesesEnPerdida.length > 0) {
+        mensaje.innerHTML += `
+            <div class="error">
+                📉 Meses en pérdida: ${mesesEnPerdida.join(', ')}
+            </div>
+        `;
+    }
+     const rankingDiv = document.getElementById('ranking');
+
+     if (rankingDiv) {
+        rankingDiv.innerHTML = `
+            <h3>🏆 Top 3</h3>
+            ${ranking.slice(0,3).map(r => `<p>${r[0]}: ${formatearMoneda(r[1])}</p>`).join('')}
+
+            <h3>💸 Peores 3</h3>
+            ${ranking.slice(-3).map(r => `<p>${r[0]}: ${formatearMoneda(r[1])}</p>`).join('')}
+    `    ;
+    }
+    
+
+    // 🔹 ACTUALIZAR UI
+    document.getElementById('totalIngresos').textContent = formatearMoneda(totalIngresos);
+    document.getElementById('totalEgresos').textContent = formatearMoneda(totalEgresos);
+    document.getElementById('balance').textContent = formatearMoneda(balance);
+
+    actualizarTabla(datos);
+    actualizarGraficos(totalIngresos, totalEgresos, transaccionesPorMes);
+    // 🔥 CARDS POR CENTRO
+const contenedor = document.getElementById('cardsCentros');
+contenedor.innerHTML = '';
+
+const centros = {};
+
+datos.forEach(d => {
+    if (!centros[d.centro]) {
+        centros[d.centro] = { ingresos: 0, egresos: 0 };
+    }
+
+    if (d.tipo === 'ingreso') {
+        centros[d.centro].ingresos += d.monto;
+    } else {
+        centros[d.centro].egresos += d.monto;
+    }
+});
+
+Object.entries(centros).forEach(([nombre, val]) => {
+
+    const balance = val.ingresos - val.egresos;
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.cursor = 'pointer';
+
+    card.innerHTML = `
+        <h3>${nombre}</h3>
+        <div>Ingresos: ${formatearMoneda(val.ingresos)}</div>
+        <div>Egresos: ${formatearMoneda(val.egresos)}</div>
+        <div><strong>Balance: ${formatearMoneda(balance)}</strong></div>
+    `;
+
+    card.onclick = () => abrirDetalleCentro(nombre);
+
+    contenedor.appendChild(card);
+});
+    
+
+}
+
+function actualizarTabla(datos) {
+    const tbody = document.getElementById('tablaTransacciones');
+    tbody.innerHTML = '';
+
+    datos.forEach(item => {
+        const fila = document.createElement('tr');
+
+        const badge = item.tipo === 'ingreso'
+            ? '<span class="ingreso-badge">Ingreso</span>'
+            : '<span class="egreso-badge">Egreso</span>';
+
+        fila.innerHTML = `
+            <td>${item.fecha}</td>
+            <td>${item.descripcion}</td>
+            <td>${badge}</td>
+            <td style="font-weight: bold; color: ${item.tipo === 'ingreso' ? '#10b981' : '#ef4444'}">
+                ${formatearMoneda(item.monto)}
+            </td>
+        `;
+
+        tbody.appendChild(fila);
+    });
+}
+
+function actualizarGraficos(ingresos, egresos, porMes) {
+    if (chartPie) chartPie.destroy();
+    if (chartLine) chartLine.destroy();
+
+    const ctxPie = document.getElementById('pieChart').getContext('2d');
+
+    chartPie = new Chart(ctxPie, {
+    type: 'doughnut',
+    data: {
+        labels: ['Ingresos', 'Egresos'],
+        datasets: [{
+            data: [ingresos, egresos],
+            backgroundColor: ['#10b981', '#ef4444']
+        }]
+    },
+    options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: { position: 'bottom' },
+        tooltip: {
+            callbacks: {
+                label: function(context) {
+                    return formatearMoneda(context.raw);
+                }
+            }
+        }
+    }
+}
+});
+
+    const meses = Object.keys(porMes).sort();
+    const ingresosArray = meses.map(m => porMes[m].ingresos);
+    const egresosArray = meses.map(m => porMes[m].egresos);
+
+    const ctxLine = document.getElementById('lineChart').getContext('2d');
+
+    chartLine = new Chart(ctxLine, {
+    type: 'line',
+    data: {
+        labels: meses,
+        datasets: [
+            { label: 'Ingresos', data: ingresosArray },
+            { label: 'Egresos', data: egresosArray }
+        ]
+    },
+    options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: { position: 'bottom' },
+        tooltip: {
+            callbacks: {
+                label: function(context) {
+                    return formatearMoneda(context.raw);
+                }
+            }
+        }
+    },
+    scales: {
+        y: { beginAtZero: true }
+    }
+}
+});
+}
+
+function llenarSelectorMeses(datos) {
+    const select = document.getElementById('filtroMes');
+    select.innerHTML = '<option value="todos">Todos los meses</option>';
+
+    const meses = [...new Set(datos.map(d => d.fecha.trim()))].sort();
+
+    meses.forEach(mes => {
+        const option = document.createElement('option');
+        option.value = mes;
+        option.textContent = mes;
+        select.appendChild(option);
+    });
+}
+
+function filtrarTodo() {
+    if (!window.datosGlobales) return;
+
+    const mes = document.getElementById('filtroMes').value;
+    const centro = document.getElementById('filtroCentro').value;
+
+    let datosFiltrados = window.datosGlobales;
+
+    if (mes !== 'todos') {
+        datosFiltrados = datosFiltrados.filter(d => d.fecha.trim() === mes);
+    }
+
+    if (centro !== 'todos') {
+        datosFiltrados = datosFiltrados.filter(d => d.centro === centro);
+    }
+
+    procesarDatos(datosFiltrados);
+
+    // 🔥 NUEVO: si estoy en vista detalle → actualizarla
+    if (document.getElementById('vistaCentro').style.display === 'block') {
+        cargarDetalleCentro(centro);
+    }
+}
+
+function toggleAutoUpdate() {
+    autoUpdate = !autoUpdate;
+
+    if (autoUpdate) {
+        intervalo = setInterval(cargarDatos, 10000);
+    } else {
+        clearInterval(intervalo);
+    }
+}
+function exportarExcel() {
+    if (!window.datosGlobales) {
+        alert("No hay datos para exportar");
+        return;
+    }
+
+    let contenido = "Fecha,Descripción,Tipo,Monto\n";
+
+    window.datosGlobales.forEach(d => {
+        contenido += `${d.fecha},${d.descripcion},${d.tipo},${d.monto}\n`;
+    });
+
+    const blob = new Blob([contenido], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "dashboard_financiero.csv";
+    link.click();
+}
+function exportarPDF() {
+    const elemento = document.getElementById('contenido');
+
+    html2pdf().from(elemento).save('dashboard_financiero.pdf');
+}
+function actualizarGraficoCategorias(labels, data) {
+
+    const ctx = document.getElementById('barCategorias').getContext('2d');
+
+    if (chartCategorias) chartCategorias.destroy();
+
+    chartCategorias = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Monto',
+                data: data,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return formatearMoneda(context.raw);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+  function llenarSelectorCentros(datos) {
+    const select = document.getElementById('filtroCentro');
+
+    select.innerHTML = '<option value="todos">Todos los centros</option>';
+
+    const centros = [...new Set(datos.map(d => d.centro))];
+
+    centros.sort();
+
+    centros.forEach(c => {
+        const option = document.createElement('option');
+        option.value = c;
+        option.textContent = c;
+        select.appendChild(option);
+    });
+}
+function abrirDetalleCentro(nombreCentro) {
+
+    // 🔄 Cambiar de vista (tipo Power BI)
+    document.getElementById('contenido').style.display = 'none';
+    document.getElementById('vistaCentro').style.display = 'block';
+
+    // 🏷️ Título del centro
+    document.getElementById('tituloCentro').textContent =
+        nombreCentro === 'todos' ? 'TODOS LOS CENTROS' : nombreCentro;
+
+    // 🚀 Cargar datos desde la segunda hoja
+    cargarDetalleCentro(nombreCentro);
+}
+
+function volverDashboard() {
+    document.getElementById('vistaCentro').style.display = 'none';
+    document.getElementById('contenido').style.display = 'block';
+}
+const CSV_DETALLE = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSM-gzlhL_TT_8JbZbautFkIy-WPUGv9nLECHidRlte4bcgy-uX0U_J5exQ16KrMY4Z3W7UcgP_eT6X/pub?gid=736925822&single=true&output=csv";
+
+async function cargarDetalleCentro(centro) {
+
+    const res = await fetch(CSV_DETALLE + '&nocache=' + new Date().getTime());
+    const csv = await res.text();
+
+    const datos = parsearCSVDetalle(csv);
+
+    console.log("CENTRO CLICK:", centro);
+    console.log("DATOS COMPLETOS:", datos.slice(0,5));
+
+    // 🔥 PEGALO ACÁ (reemplazando el filtro viejo)
+   let datosCentro = datos;
+
+   // 🔥 FILTRO POR CENTRO SOLO SI APLICA
+   if (centro && centro !== 'todos') {
+
+      datosCentro = datos.filter(d => 
+          normalizarTexto(d.centro) === normalizarTexto(centro)
+      );
+
+      // 🔥 fallback tipo Power BI
+      if (datosCentro.length === 0) {
+        datosCentro = datos.filter(d => 
+            normalizarTexto(d.centro).includes(normalizarTexto(centro))
+        );
+      }
+    }
+   
+   // 🔥 FILTRO POR MES (IGUAL QUE EL DASHBOARD)
+   const mesSeleccionado = document.getElementById('filtroMes').value;
+
+   console.log("ANTES DEL FILTRO:", datosCentro);
+   console.log("MES SELECT:", mesSeleccionado);
+
+  if (mesSeleccionado !== 'todos') {
+     datosCentro = datosCentro.filter(d => 
+        normalizarTexto(d.fecha) === normalizarTexto(mesSeleccionado)
+    );
+  }
+
+  console.log("DESPUÉS DEL FILTRO:", datosCentro);
+  console.log("FECHAS DETALLE:", datosCentro.map(d => d.fecha));
+
+    
+
+
+    let facturacion = 0;
+    let rrhh = 0;
+    let prestacional = 0;
+    let comercial = 0;
+    let servicios = 0;
+    let impuestos = 0;
+    let gastosNoMedicos = 0;
+    let insumosMedicos = 0;
+    let honorariosMedicos = 0;
+
+    datosCentro.forEach(d => {
+        if (d.tipo === 'ingreso') facturacion += d.monto;
+
+        const cat = d.categoria.toLowerCase();
+
+        if (cat.includes('rrhh')) rrhh += d.monto;
+        if (cat.includes('prestacional')) prestacional += d.monto;
+        if (cat.includes('comercial')) comercial += d.monto;
+        if (cat.includes('servicios')) servicios += d.monto;
+        if (cat.includes('impuestos')) impuestos += d.monto;
+        if (cat.includes('gastos no medicos')) gastosNoMedicos += d.monto;
+        if (cat.includes('insumos')) insumosMedicos += d.monto;
+        if (cat.includes('honorarios medicos')) honorariosMedicos += d.monto;
+    });
+
+
+    document.getElementById('facturacionCentro').textContent = formatearMoneda(facturacion);
+    document.getElementById('rrhh').textContent = formatearMoneda(rrhh);
+    document.getElementById('prestacional').textContent = formatearMoneda(prestacional);
+    document.getElementById('comercial').textContent = formatearMoneda(comercial);
+    document.getElementById('servicios').textContent = formatearMoneda(servicios);
+    document.getElementById('impuestos').textContent = formatearMoneda(impuestos);
+    document.getElementById('GastosnoMedicos').textContent = formatearMoneda(gastosNoMedicos);
+    document.getElementById('InsumosMedicos').textContent = formatearMoneda(insumosMedicos);
+    document.getElementById('HonorariosMedicos').textContent = formatearMoneda(honorariosMedicos);
+
+  
+}
+
+function parsearCSVDetalle(csv) {
+    const lineas = csv.trim().split('\n');
+    if (lineas.length < 2) return [];
+
+    const separador = lineas[0].includes(';') ? ';' :
+                      lineas[0].includes('\t') ? '\t' : ',';
+
+    const datos = [];
+
+    for (let i = 1; i < lineas.length; i++) {
+        const valores = lineas[i].split(separador).map(v => v.trim());
+
+        if (valores.length < 4) continue;
+
+    datos.push({
+        fecha: valores[0],
+        centro: valores[1], // ✅ AHORA SÍ
+        tipo: valores[2].toLowerCase().trim(),
+        categoria: valores[3],
+        monto: convertirMonto(valores[4])
+    });
+    }
+
+    return datos;
+}
+
+function convertirMes(mesTexto) {
+    const mapa = {
+        'ene': '01',
+        'feb': '02',
+        'mar': '03',
+        'abr': '04',
+        'may': '05',
+        'jun': '06',
+        'jul': '07',
+        'ago': '08',
+        'sep': '09',
+        'oct': '10',
+        'nov': '11',
+        'dic': '12'
+    };
+
+    const [mes, anio] = mesTexto.split('-');
+    return `20${anio}-${mapa[mes]}`;
+}
+
+
+
+</script>
+</body>
+</html>
