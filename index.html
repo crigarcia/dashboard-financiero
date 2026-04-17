@@ -294,6 +294,36 @@
   animation: shake 0.4s;
 }
 
+ #detalleWrapper {
+   max-height: 0;
+   overflow: hidden;
+   transition: all 0.5s ease;
+   opacity: 0;
+}
+
+#detalleWrapper.activo {
+  max-height: 1000px;
+  opacity: 1;
+  margin-top: 20px;
+}
+
+.btn-detalle {
+  margin: 20px 0;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.btn-detalle:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}    
+
 
   </style>
 </head>
@@ -370,7 +400,14 @@
   <canvas id="barCategorias"></canvas>
 </div>
 
-      <div class="table-container">
+      </div> <!-- cierre de charts -->
+
+      <button onclick="toggleDetalle()" class="btn-detalle">
+        📄 Ver detalle
+      </button>
+
+      <div id="detalleWrapper">
+        <div class="table-container">
         <h3>Detalle de Transacciones</h3>
 
         <table>
@@ -387,6 +424,8 @@
           <tbody id="tablaTransacciones"></tbody>
         </table>
       </div>
+    </div>
+        
       <div id="ranking"></div>
 
     </div>
@@ -1104,6 +1143,19 @@ function convertirMes(mesTexto) {
 
     const [mes, anio] = mesTexto.split('-');
     return `20${anio}-${mapa[mes]}`;
+}
+
+function toggleDetalle() {
+    const detalle = document.getElementById('detalleWrapper');
+    const btn = document.querySelector('.btn-detalle');
+
+    detalle.classList.toggle('activo');
+
+    if (detalle.classList.contains('activo')) {
+        btn.textContent = '🔽 Ocultar detalle';
+    } else {
+        btn.textContent = '📄 Ver detalle';
+    }
 }
 
 
