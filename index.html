@@ -731,14 +731,36 @@ function procesarDatos(datos) {
           <div class="ranking-box">
 
             <h3>🏆 Top 3</h3>
-            ${ranking
+            ${
+             ranking
                .filter(r => r[1] > 0)
-               .slice(0,3)
-                .map((r, i) => `
-                  <div class="ranking-item top">
-                    <span>#${i+1} ${r[0]}</span>
-                    <strong    `    
+               .slice(0, 3)
+               .map((r, i) => `
+                 <div class="ranking-item top">
+                  <span>#${i + 1} ${r[0]}</span>
+                  <strong>${formatearMoneda(r[1])}</strong>
+                </div>
+                `)
+              .join('')
     }
+
+             <h3>💸 Peores 3</h3>
+             ${
+              ranking
+                .filter(r => r[1] > 0)
+                .slice(-3)
+                .map((r, i) => `
+                  <div class="ranking-item bad">
+                   <span>${r[0]}</span>
+                   <strong>${formatearMoneda(r[1])}</strong>
+                  </div>
+                   `)
+                .join('')
+     }
+
+            </div>
+            `;   `   
+     }
     
 
     // 🔹 ACTUALIZAR UI
