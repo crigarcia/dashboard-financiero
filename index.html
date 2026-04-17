@@ -728,12 +728,16 @@ function procesarDatos(datos) {
 
      if (rankingDiv) {
         rankingDiv.innerHTML = `
-            <h3>🏆 Top 3</h3>
-            ${ranking.slice(0,3).map(r => `<p>${r[0]}: ${formatearMoneda(r[1])}</p>`).join('')}
+  <div class="ranking-box">
 
-            <h3>💸 Peores 3</h3>
-            ${ranking.slice(-3).map(r => `<p>${r[0]}: ${formatearMoneda(r[1])}</p>`).join('')}
-    `    ;
+    <h3>🏆 Top 3</h3>
+    ${ranking
+      .filter(r => r[1] > 0)
+      .slice(0,3)
+      .map((r, i) => `
+        <div class="ranking-item top">
+          <span>#${i+1} ${r[0]}</span>
+          <strong    `    ;
     }
     
 
