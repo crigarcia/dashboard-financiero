@@ -1053,6 +1053,13 @@ function abrirDetalleCentro(nombreCentro) {
     // 🏷️ Título del centro
     document.getElementById('tituloCentro').textContent =
         nombreCentro === 'todos' ? 'TODOS LOS CENTROS' : nombreCentro;
+  // 🔥 ocultar ranking
+    document.getElementById('ranking').style.display = 'none';
+
+    document.getElementById('contenido').style.display = 'none';
+    document.getElementById('vistaCentro').style.display = 'block';
+
+    document.getElementById('tituloCentro').textContent = nombreCentro;
 
     // 🚀 Cargar datos desde la segunda hoja
     cargarDetalleCentro(nombreCentro);
@@ -1061,6 +1068,8 @@ function abrirDetalleCentro(nombreCentro) {
 function volverDashboard() {
     document.getElementById('vistaCentro').style.display = 'none';
     document.getElementById('contenido').style.display = 'block';
+  // 🔥 volver a mostrar ranking
+    document.getElementById('ranking').style.display = 'block';
 }
 const CSV_DETALLE = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSM-gzlhL_TT_8JbZbautFkIy-WPUGv9nLECHidRlte4bcgy-uX0U_J5exQ16KrMY4Z3W7UcgP_eT6X/pub?gid=736925822&single=true&output=csv";
 
